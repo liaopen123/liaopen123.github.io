@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      android-同一个activity中切换Fragment同时改变状态栏
+title:     (翻译)用户体验的最高境界–KISS原则(keep it stupid and simple).md
 subtitle:   KISS 原则是用户体验的高层境界
 date:       2016-10-24
 author:     Pony
