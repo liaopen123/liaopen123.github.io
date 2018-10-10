@@ -2,7 +2,7 @@
 layout:     post
 title:      android-同一个activity中切换Fragment同时改变状态栏
 subtitle:   
-date:       2016-10-21
+date:       2016-10-22
 author:     Pony
 header-img: img/post-bg-cook.jpg
 catalog: true
