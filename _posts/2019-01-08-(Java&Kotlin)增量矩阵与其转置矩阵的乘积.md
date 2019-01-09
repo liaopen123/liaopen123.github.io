@@ -15,12 +15,12 @@ tags:
 >增量矩阵是一个元素为初始值initialValue的递增值的矩阵
   例如，如果初始值initialValue=1，且维度为rows=3 和 columns =3,
   则增量矩阵为：
-  1  2  3
-  
-  4  5  6
-  
-  7  8  9
-  
+
+ ```
+ 1  2  3
+4  5  6
+7  8  9
+  ``` 
   写一个算法，将原始增量矩阵与其转置阵相乘。
 
 
@@ -38,38 +38,38 @@ tags:
     
     columns = 3
   输出：
-  
+  ```
   14  32  50
   
   32  77  122
   
   20  122 194
-  
+  ```
   解释  对于
    initialValue =1   rows = 3   columns = 3的情况，增量矩阵为
-  
+  ```
   1  2  3
   
   4  5  6
   
   7  8  9
-  
+  ```
   其转置矩阵为
-  
+  ```
   1  4  7
   
   2  5  8
   
   3  6  9
-  
+  ```
   因此，将由此产生的乘积矩阵为
-  
+  ```
   14  32  50
   
   32  77  122
   
   20  122 194
-  
+  ```
 
 
 ## 代码实现
@@ -156,9 +156,9 @@ public int[][] transposeMultMatrix(int initialValue, int rows, int columns){
   fun getPlus(initialValue :Int,rows:Int,cloumus :Int): Array<IntArray> {
         val  array =  getOrignalArray(initialValue, rows, cloumus)
         val reveseArray = getReveseArray(array)
-      //  getPlus(array,reveseArray)
+        var finalArray = transposeMultMatrix(array,reveseArray)
 
-      return  array
+      return  finalArray
     }
     /**
      * 增量矩阵和转置矩阵的乘积
