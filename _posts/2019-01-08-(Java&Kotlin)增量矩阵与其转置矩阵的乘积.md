@@ -32,15 +32,18 @@ tags:
   输出
   返回由增量矩阵和其转置矩阵相乘得到的一个二维矩阵
 
-  示例
+示例
 >输入：
   initialValue =1 
-  
-    rows = 3 
+  rows = 3 
+  columns = 3
+   
     
-    columns = 3
-  输出：
   
+  
+
+输出：
+ 
   14  32  50
   
   32  77  122
@@ -50,7 +53,9 @@ tags:
   解释  对于
    initialValue =1   rows = 3   columns = 3的情况，增量矩阵为
   
-  1  2  3
+
+  
+  1  2  3
   
   4  5  6
   
