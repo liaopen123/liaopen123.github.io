@@ -124,3 +124,5 @@ AppRegistry.registerComponent('callAndroidProject', () => HelloWorldApp);
 
 
 这样就初步完成了React Native 与 Android端的交互流程。
+
+源码地址：[react-native-call-android](https://github.com/liaopen123/react-native-call-android)
