@@ -126,3 +126,227 @@ AppRegistry.registerComponent('callAndroidProject', () => HelloWorldApp);
 这样就初步完成了React Native 与 Android端的交互流程。
 
 源码地址：[react-native-call-android](https://github.com/liaopen123/react-native-call-android)
+
+## Android页面内嵌套rn布局
+### 方法一：通过container#addView()添加进去
+具体代码：
+```java
+ @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mReactRootView = new ReactRootView(this);
+        mReactInstanceManager = ReactInstanceManager.builder()
+                .setApplication(getApplication())
+                .setBundleAssetName("index.android.bundle")
+                .setJSMainModuleName("index.android")
+                .addPackage(new MainReactPackage())
+                .setUseDeveloperSupport(BuildConfig.DEBUG)
+                .setInitialLifecycleState(LifecycleState.RESUMED)
+                //.setUseOldBridge(true) // uncomment this line if your app crashes
+                .build();
+        mReactRootView.startReactApplication(mReactInstanceManager, "HelloWorld", null);
+
+        setContentView(R.layout.myreactactivity);
+        initView();
+    }
+
+   
+    private void initView() {
+        ll = (LinearLayout) findViewById(R.id.ll);
+        ll.addView(mReactRootView);
+    }
+}
+```
+
+### 方法二：通过xml布局中添加ReactRootView，进行展示：
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".OriginalContainRNActivity">
+<TextView
+    android:text="我是原生"
+    android:textColor="#ffffff"
+    android:textSize="24dp"
+    android:gravity="center"
+    android:background="#000000"
+    android:layout_width="match_parent"
+    android:layout_height="50dp" />
+<com.facebook.react.ReactRootView
+    android:id="@+id/reactRootView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"></com.facebook.react.ReactRootView>
+    <TextView
+        android:text="我是原生"
+        android:textColor="#ffffff"
+        android:textSize="24dp"
+        android:gravity="center"
+        android:background="#000000"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" />
+</LinearLayout>
+```
+```java
+public class OriginalContainRNActivity  extends AppCompatActivity implements DefaultHardwareBackBtnHandler {
+    public static final int OVERLAY_PERMISSION_REQ_CODE = 1235;
+    private ReactRootView mReactRootView;
+    private ReactInstanceManager mReactInstanceManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_original_contain_rn);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            if (!Settings.canDrawOverlays(this)) {
+//                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+//                        Uri.parse("package:" + getPackageName()));
+//                startActivityForResult(intent, OVERLAY_PERMISSION_REQ_CODE);
+//            }
+//        }
+
+        mReactRootView = findViewById(R.id.reactRootView);
+        mReactInstanceManager = ReactInstanceManager.builder().setApplication(getApplication())
+                .setBundleAssetName("index.android.bundle")
+//                .setJSMainModuleName("index.android")
+                .addPackage(new MainReactPackage())
+                .setUseDeveloperSupport(BuildConfig.DEBUG)
+                .setInitialLifecycleState(LifecycleState.RESUMED)
+                .build();
+        mReactRootView.startReactApplication(mReactInstanceManager, "asproject", null);
+
+    }
+
+    @Override
+    public void invokeDefaultOnBackPressed() {
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+// super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == OVERLAY_PERMISSION_REQ_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.canDrawOverlays(this)) {
+                    // SYSTEM_ALERT_WINDOW permission not granted...
+                }
+            }
+        }
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mReactInstanceManager != null) {
+            mReactInstanceManager.onHostPause(this);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mReactInstanceManager != null) {
+            mReactInstanceManager.onHostResume(this, this);
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mReactInstanceManager != null) {
+            mReactInstanceManager.onHostDestroy(this);
+        }
+    }
+    @Override
+    public void onBackPressed() {
+        if (mReactInstanceManager != null) {
+            mReactInstanceManager.onBackPressed();
+        } else {
+            super.onBackPressed();
+        }
+    }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU && mReactInstanceManager != null) {
+            mReactInstanceManager.showDevOptionsDialog();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+}
+```
+
+### rn与Android数据交互的三种方式：
+1. Callback
+2. Promise
+3. RN端DeviceEventEmitter注册监听，App端发送消息。类似于广播。
+
+#### Callback
+RN端调用方法，Android端执行对应方法，并通过Promise进行回调。
+Android端代码演示：
+```java
+ @ReactMethod
+    public void testAndroidCallbackMethod(String msg, Callback callback){
+        Toast.makeText(getReactApplicationContext(),msg,Toast.LENGTH_LONG).show();
+        callback.invoke("abc");
+    }
+```
+RN端代码演示：
+```javascript
+   _onPressButton2(){
+        NativeModules.CallModule.testAndroidCallbackMethod("HelloJack",(result)=>{
+           this.setState({text:result});
+       });
+    }
+```
+#### Promise
+RN端调用方法，Android端执行对应方法，并通过Promise进行回调。
+Android端代码演示：
+```java
+  @ReactMethod
+    public void textAndroidPromiseMethod(String msg, Promise promise){
+        Toast.makeText(getReactApplicationContext(),msg,Toast.LENGTH_SHORT).show();
+        String result="lph23333";
+        promise.resolve(result);
+    }
+```
+RN端代码演示：
+```javascript
+  _onPressButton3(){
+       NativeModules.CallModule.textAndroidPromiseMethod("abcx").then((result)=>{
+                 this.setState({text3:result});
+             }).catch((error)=>{
+                 this.setState({text:'error'});
+             })
+    }
+```
+
+#### DeviceEventEmitter
+执行流程：
+1. RN端注册监听
+2. Android 发送时间
+3. RN端执行监听中的回调事件
+
+RN端代码：
+```javascript
+//componentWillMount为生命周期方法， 组件将要装载时候执行，在render之前调用。
+ componentWillMount() {
+        DeviceEventEmitter.addListener('EventName', function  (msg) {
+            console.log(msg);
+            let rest=NativeModules.CallModule.MESSAGE;
+            ToastAndroid.show("DeviceEventEmitter收到消息:" + "\n" + rest, ToastAndroid.SHORT)
+        });
+```
+Android端：
+```java
+   public void onScanningResult(){
+        WritableMap params = Arguments.createMap();
+        params.putString("key", "myData");
+        getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit("EventName", params);
+    }
+```
+参考文章:[React Native与Android 原生通信](https://juejin.im/entry/5ae3edcaf265da0b9b071346)
+[RN之Android:原生界面与React界面的相互调用及数据传递](https://github.com/ipk2015/RN-Resource-ipk/blob/master/react-native-docs/RN%E4%B9%8BAndroid:%E5%8E%9F%E7%94%9F%E7%95%8C%E9%9D%A2%E4%B8%8EReact%E7%95%8C%E9%9D%A2%E7%9A%84%E7%9B%B8%E4%BA%92%E8%B0%83%E7%94%A8%E5%8F%8A%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%92.md)
