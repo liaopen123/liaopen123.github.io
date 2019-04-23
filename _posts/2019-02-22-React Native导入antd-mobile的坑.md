@@ -10,6 +10,17 @@ tags:
     - ReactNative
     - antd-mobile
 ---
+
+
+以下⬇️⬇️⬇️⬇️⬇️⬇️内容全部废弃，因为3.0版的antd-mobile更名为**ant-design-mobile-rn**：
+安装使用参照(ant-design-mobile-rn)[https://github.com/ant-design/ant-design-mobile-rn/blob/master/README.zh-CN.md]
+**注意：导包的名称应该为:@ant-design/react-native**
+比如：
+```java
+import { Button } from '@ant-design/react-native';
+```
+
+
 从2019年的2月11号下午3:00开始到2019年的2月22号早上11点终于解决这个问题。
 一个接着一个的报错。多个解决方案的排列组合。终于走出来了一条光明大道出来。
 从创建项目开始，一个一个问题是如何解决的。我准备重新演示一遍。
@@ -95,8 +106,9 @@ please use version 5.0.2 of babel-preset-react-native, it will work. Its because
   * rm -rf node_modules/.cache
   * react-native start --resetCache
   
-  
-  ## 最后大功告成
+
+  ## ~~最后大功告成~~
 ![](https://ws4.sinaimg.cn/large/006tKfTcly1g0f52xqtvkj309o0izt92.jpg)
+
 
   
