@@ -12,3 +12,5 @@ tags:
 
 
 
+
+参考文章:[RecyclerView缓存机制](https://juejin.im/post/5c696ba9e51d457f136d24ff#heading-8)
