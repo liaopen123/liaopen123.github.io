@@ -1,0 +1,97 @@
+---
+layout:     post
+title:  A使用Travis-CI构建Android项目并自动打包部署到GitHub-Release
+subtitle: 基本流程
+date:     2019-09-24
+author:     Pony
+header-img: img/post-bg-mayday-bubble.jpg
+catalog: true
+tags:
+    - Travis GitHub Android
+---
+
+
+
+
+## 基本概念
+### AOP
+面向切面编程(Aspect-Oriented Programming),如果说OOP是把问题划分到单个模块的话，那么AOP就是把`涉及到众多模块的某一个问题进行统一管理`。
+`AOP`通过`预编译方式`和`运行期动态代理`实现持续功能的统一维护。
+
+### ASpectJ
+
+实际运用的过程:由于AndroidStudio默认是没有ajc编译器的，所以在Android中使用@AspectJ来编写（包括SpringAOP也是如此）。它在代码的**编译期间扫描目标程序，根据切点（PointCut）匹配,将开发者编写的Aspect程序编织（Weave）到目标程序的.class文件中，对目标程序作了重构（重构单位是JoinPoint），目的就是建立目标程序与Aspect程序的连接（获得执行的对象、方法、参数等上下文信息），从而达到AOP的目的。**
+
+`AOP`虽然是方法论，但是先行者开发了一套语言用来支持AOP，现在比较火的就是`ASpectJ`，它完全兼容java，算是Java的一种扩展，使用ASpectJ有两种方法:
+1. 完全使用ASpectJ的语言，和java几乎一模一样，只是多了一些关键词而已。
+2. 或者使用纯java，然后使用AspectJ注解，简称`@AspectJ`。
+
+应用场景：
+* 性能监控: 在方法调用前后，记录调用时间，方法执行太长或超时就报警。
+* 无痕埋点: 在需要埋点的地方添加对应统计代码。
+* 缓存代理: 缓存某方法的返回值，下次执行该方法时，直接从缓存里面去取。
+* 记录日志: 在方法执行前后记录系统日志。
+* 权限验证: 方法执行前，验证是否有权限执行当前方法，没有则抛出权限执行异常，由业务代码捕捉。
+* 数据校验
+* 其他 结合业务扩展。
+
+AspectJ除了hook之外，AspectJ还可以为目标类添加变量,接口。另外，AspectJ也有抽象，继承等各种更高级的玩法。它能够在编译期间直接修改源代码生成class，强大的团战切入功能，指哪打哪，鞭辟入里。有了此神器，编程亦如庖丁解牛，游刃而有余。
+
+ 
+
+#### ASpectJ语法
+##### Join Points介绍
+JPoints就是程序运行时的执行点，哪些执行点是JPoints呢？比如：
+* `一个函数的调用`可以是一个JPoint，例如Log.e(),e的执行算一个JPoints，调用e的函数也可以认为是一个JPoint。
+* `设置一个变量，或者读取一个变量`，也可以是一个JPoint。
+* `for循环`可以看做是JPoint。
+
+理论上，一个程序很多地方都可以看做JPoint，但是在ASpectJ中，只有下表的几种执行点被认为是JPoint:
+
+
+
+| Join Points | 说明 | 示例  |
+| :-: | :-: | :-: |
+| method call | 函数调用 | 比如调用：Log.e(),这是一处JPoint |
+| method execution | 函数执行 | 比如Log.e()，执行内部，就是一处JPoint。 |
+| constructor call | 构造函数的调用 | 和 method call 一样 |
+| constructor execution | 构造函数的执行 | 和 method execution 一样  |
+| field get | 获取某个变量 | 比如获取Builder.Debug |
+| field set | 设置某个变量 | 比如设置Builder.Debug |
+| pre-initiallization | Object在构造函数中做的一些工作 | 很少使用  |
+| initiallization | Object在构造函数中做的一些工作 | 下面例子 |
+| static initiallization | 类初始化 | 比如类的static{} |
+| handler | 异常处理 | 比如try catch中的catch内的执行 |
+| advice execution |  |  |
+
+
+
+##### Pointcuts介绍
+告诉代码注入工具在哪里注入特定代码的表达式，即需要在拿些特定的`join point`应用特定的`Advice`。它可以选择一个单一的点或者许多相似的点。
+![](https://ws3.sinaimg.cn/large/006tNc79ly1g2qa9wrxscj30m807daax.jpg)
+
+##### Advice介绍
+常见的Adavice有`Before`,`After`,`Around`,表示代码执行前，执行后，替换目标代码，也就是在Pointcut何处注入代码。
+
+method的call 和 execution
+execution
+作用与`call`类似，只不过执行点JPoint在方法的内部，而`call`插入点是在方法的外部。
+
+constructor的call 和execution
+constructor的call和execution 与`method`几乎一模一样，最大的区别在于`signature`：
+signature就是括号中间写的那些代码
+
+
+
+看到[滴滴开源 DroidAssist : 轻量级 Android 字节码编辑插件](<https://juejin.im/post/5cdce038f265da038e54cfd7?utm_source=gold_browser_extension>)突然想到，切片开发其实应用的一个场景就是说，针对现有代码进行改动，如果有大量相同的老代码需要改动，可以不动他们，通过切片开发，监听最根源的方法，然后获取到值，进行阻拦，修改成自己想要成为的代码即可。这个已改就是它的意义8 
+
+交笔记啦：
+
+![](https://ws1.sinaimg.cn/large/006tNc79ly1g2yx6stwbpj30u01adkjl.jpg)
+![](https://ws4.sinaimg.cn/large/006tNc79ly1g2yx7gz3zuj30u01ad4qp.jpg)
+
+
+参考文档:[AOP 之 AspectJ 全面剖析 in Android](https://www.jianshu.com/p/f90e04bcb326)
+
+[Aspectj 解决Android 6.0以上权限问题](https://www.jianshu.com/p/6c1b0ec68ff6)
+[Android面向切面（AOP）编程实战](https://blog.csdn.net/qq_36523667/article/details/78885332)
